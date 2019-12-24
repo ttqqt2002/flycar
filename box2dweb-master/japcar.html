@@ -1,0 +1,95 @@
+<canvas id="canvas" width="600px" height="420px" style="background-color:#333333;"></canvas>
+
+<script type="text/javascript" src="Box2D.js"></script>
+<script type="text/javascript">
+
+    // Box2Dオブジェクトを取得
+    var b2Vec2 = Box2D.Common.Math.b2Vec2 // 2Dベクトル
+     ,  b2BodyDef = Box2D.Dynamics.b2BodyDef // Body定義
+     ,  b2Body = Box2D.Dynamics.b2Body // Body
+     ,  b2FixtureDef = Box2D.Dynamics.b2FixtureDef // Fixture定義
+     ,  b2Fixture = Box2D.Dynamics.b2Fixture // Fixture
+     ,  b2World = Box2D.Dynamics.b2World // 物理世界
+     ,  b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape // 衝突オブジェクトの形状（ポリゴン）
+     ,  b2CircleShape = Box2D.Collision.Shapes.b2CircleShape  // 衝突オブジェクトの形状（円）
+     ,  b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef // 回転ジョイント
+     ,  b2DebugDraw = Box2D.Dynamics.b2DebugDraw // デバッグ描画
+
+
+    // 世界を作る
+    var world = new b2World(new b2Vec2(0,10), true);
+
+    /////////////////////////////
+
+    var bodyDef = new b2BodyDef;
+    bodyDef.type = b2Body.b2_dynamicBody;
+
+    var fixDef = new b2FixtureDef;
+    fixDef.density = 30;
+    fixDef.friction = 10;
+    fixDef.restitution = 0.1;
+    fixDef.shape = new b2CircleShape(0.3);
+
+    // 車輪1
+    bodyDef.position.Set(8,10);
+    var wheel1=world.CreateBody(bodyDef);
+    wheel1.CreateFixture(fixDef);
+    // 車輪2
+    bodyDef.position.Set(12,10);
+    var wheel2=world.CreateBody(bodyDef);
+    wheel2.CreateFixture(fixDef);
+
+    // 台車
+    bodyDef.position.Set(10,9.5);
+    fixDef.shape = new b2PolygonShape;
+    fixDef.shape.SetAsBox(4,.5);
+    var car = world.CreateBody(bodyDef);
+    car.CreateFixture(fixDef);
+
+    // 回転ジョイント
+    var revoluteJointDef = new b2RevoluteJointDef();
+    revoluteJointDef.Initialize(car, wheel1, wheel1.GetWorldCenter());
+    revoluteJointDef.maxMotorTorque = 1100.0;// トルク力
+    revoluteJointDef.motorSpeed = 3.0; // 回転速度
+    revoluteJointDef.enableMotor = true; // モーターを有効化
+    var revoluteJointA = world.CreateJoint(revoluteJointDef);
+
+    revoluteJointDef.Initialize(car, wheel2, wheel2.GetWorldCenter());
+    revoluteJointDef.lowerAngle = -Math.PI/2; // 可動範囲の最小値
+    revoluteJointDef.upperAngle = Math.PI*5; // 可動範囲の最大値
+    revoluteJointDef.enableLimit = true; // 可動範囲を可動有効化
+    var revoluteJointB = world.CreateJoint(revoluteJointDef);
+
+    // 地面
+    var bodyDef = new b2BodyDef;
+    bodyDef.type = b2Body.b2_staticBody;
+    bodyDef.position.Set(-3,14);
+
+    var fd = new b2FixtureDef;
+    fd.shape = new b2PolygonShape;
+    fd.shape.SetAsBox(20,1);
+
+    var holder = world.CreateBody(bodyDef);
+    holder.CreateFixture(fd);    
+
+    /////////////////////////////
+
+
+    // デバッグ描画の設定      
+    var debugDraw = new b2DebugDraw();
+    debugDraw.SetSprite ( document.getElementById ("canvas").getContext ("2d"));
+    debugDraw.SetDrawScale(30);     //描画スケール
+    debugDraw.SetFillAlpha(0.3);    //半透明値
+    debugDraw.SetLineThickness(1.0);//線の太さ
+    debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);// 何をデバッグ描画するか
+    world.SetDebugDraw(debugDraw);
+
+    window.setInterval(update,1000/60);
+
+    function update() {
+        world.Step(1 / 60, 10, 10); // 物理世界を更新する
+        world.DrawDebugData(); // デバック描画
+        world.ClearForces(); // 物理世界上の力をリセットする
+    };
+
+</script>

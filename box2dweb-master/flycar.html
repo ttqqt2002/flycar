@@ -1,0 +1,559 @@
+<!DOCTYPE HTML>
+<html>
+     <style type="text/css">
+         progress{
+                   width: 1000px;
+                   height: 10px; 
+                   color:orange; /*兼容IE10的已完成进度背景*/
+                   border:none;
+                   background:#d7d7d7; }
+
+          progress::-webkit-progress-bar{
+                background-color:#d7d7d7;
+                }
+
+          progress::-webkit-progress-value{
+                background-color:orange;
+                }
+
+         
+       </style>
+    <head>
+        <meta charset="utf-8">
+        <title>FlyCar Box2DWeb Test</title>
+        <script type="text/javascript" src="Box2D.js"></script>
+        <script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+    </head>
+
+    <body onload="init();">
+        <section  align="center" >
+            <progress value='100' max='100'></progress>
+        
+            <canvas id="canvas" width="1000" height="400" class="canvas" style="background-color:#000080;"></canvas>
+    
+
+        <script>
+        
+    
+        function init(){
+            //方便使用
+            var  b2Vec2 = Box2D.Common.Math.b2Vec2,
+                 b2BodyDef = Box2D.Dynamics.b2BodyDef,
+                 b2Body = Box2D.Dynamics.b2Body,
+                 b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+                 b2Fixture = Box2D.Dynamics.b2Fixture,
+                 b2World = Box2D.Dynamics.b2World,
+                 b2_dynamicBody=b2Body.b2_dynamicBody,
+                 b2_staticBody=b2Body.b2_staticBody,
+                 b2MassData = Box2D.Collision.Shapes.b2MassData,
+                 b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+                 b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+                 b2DebugDraw = Box2D.Dynamics.b2DebugDraw,
+                 b2RevoluteJointDef=Box2D.Dynamics.Joints.b2RevoluteJointDef,
+                 b2ContactListener=Box2D.Dynamics.b2ContactListener; //Big luck here!
+
+            var scale=30;
+            var world;
+            var flag;
+            var car;
+            var frontwheel;
+            var backwheel;
+            var imgBK=new Image();
+            var imgCarbody=new Image();
+            var imgCarwheel=new Image();
+            var imgTree=new Image();
+            var fuel=35;
+            var fuelmax=15;
+            imgCarbody.src="carbody.png";
+            imgCarwheel.src="carwheel.png";
+            imgBK.src="BK.jpg";
+            imgTree.src="Tree.jpg";
+
+
+            var imgDiban=new Image();
+            var imgFlag=new Image();
+            var imgBan=new Image();
+            var imgCloud1=new Image();
+            var imgBall=new Image();
+            var imgClouds=new Image();
+            var imgLeo=new Image();
+
+
+            imgDiban.src="diban.jpg";
+            imgFlag.src="flag.jpg";
+            imgBan.src="ban.jpg";
+            imgCloud1.src="cloud1.jpg";
+            imgBall.src="ball.jpg";
+            imgLeo.src="leo.jpg";
+           
+            var pro=document.getElementsByTagName("progress")[0];
+
+            
+
+
+             function createWorld(){
+
+                 myworld=new b2World(new b2Vec2(0,9.8),true);
+                 return myworld;
+
+                 }
+
+            //var world=createWorld();
+            restartGame();
+            //初始化
+
+            function beginContact(contact){
+                if(contact.GetFixtureA().GetBody()== car && contact.GetFixtureB().GetBody()== flag ||
+
+                    contact.GetFixtureA().GetBody()== flag && contact.GetFixtureB().GetBody()== car){
+                    console.log("HIT!!!!!");
+                    //restartGame();
+                    window.location.href='win.htm';
+                  
+                 }
+
+                 if(contact.GetFixtureA().GetBody()== frontwheel && contact.GetFixtureB().GetBody()== flag ||
+
+                    contact.GetFixtureA().GetBody()== flag && contact.GetFixtureB().GetBody()== frontwheel){
+                    console.log("HIT!!!!!");
+                    window.location.href='win.htm';
+                    //restartGame();
+                 }
+
+                 if(contact.GetFixtureA().GetBody()== backwheel && contact.GetFixtureB().GetBody()== flag ||
+
+                    contact.GetFixtureA().GetBody()== flag && contact.GetFixtureB().GetBody()== backwheel){
+                    console.log("HIT!!!!!");
+                    window.location.href='win.htm';
+                 }
+
+                if(contact.GetFixtureA().GetBody()== car && contact.GetFixtureB().GetBody()== ball ||
+
+                    contact.GetFixtureA().GetBody()== ball && contact.GetFixtureB().GetBody()== car){
+                    console.log("HIT!!!!!");
+                    fuel+=20;
+                 }
+
+            };
+
+
+            function createBox(w,h,px,py,type,rotation){
+                 var fixDef = new b2FixtureDef;
+                 fixDef.density = 1.0;//密度
+                 fixDef.friction = 0.5;//摩擦
+                 fixDef.restitution = 0.9;//弹性
+                 fixDef.shape = new b2PolygonShape;//矩形
+                 fixDef.shape.SetAsBox(w/2/scale, h/2/scale);
+            //fixDef.shape.SetAsBox(w/x2/scale,h/2/scale);//宽高
+            //创建一个矩形地板刚体
+                 var bodyDef = new b2BodyDef;                 
+                 bodyDef.type = type;
+                 bodyDef.position.Set(px/scale,py/scale);  
+                 bodyDef.angle= rotation; //55*Math.PI/180; 
+            //bodyDef.position.Set(px/scale,py/scale);
+            //世界中添加一个刚体
+                var mybody=world.CreateBody(bodyDef);
+                var myfix=mybody.CreateFixture(fixDef);
+
+                return mybody;
+                 }
+
+            function createCircle(rad,px,py,type){
+                 var fixDef = new b2FixtureDef;
+                 fixDef.density = 1.0;
+                 fixDef.friction = 0.5;
+                 fixDef.restitution = 0.5;
+                 fixDef.shape = new b2CircleShape(rad/scale);   
+
+                 var bodyDef = new b2BodyDef;                
+                 bodyDef.type = type;
+                 bodyDef.position.x = px/scale;    
+                 bodyDef.position.y = py/scale;    
+                 var mybody=world.CreateBody(bodyDef);
+                 var myfix=mybody.CreateFixture(fixDef);
+                 return mybody;
+
+
+            }
+            function createWheel(rad,px,py,type,objname){
+                 var fixDef = new b2FixtureDef;
+                 fixDef.density = 1.0;
+                 fixDef.friction = 0.5;
+                 fixDef.restitution = 0.5;
+                 fixDef.shape = new b2CircleShape(rad/scale);   
+
+                 var bodyDef = new b2BodyDef;                
+                 bodyDef.type = type;
+                 bodyDef.position.x = px/scale;    
+                 bodyDef.position.y = py/scale;    
+                 bodyDef.userData = {shape_type: objname, img: imgCarwheel, width: rad, height: rad}; 
+                 var mybody=world.CreateBody(bodyDef);
+                 var myfix=mybody.CreateFixture(fixDef);
+                 return mybody;
+
+
+            }    
+
+            function createBallAt(rad,px,py){
+                 var fixDef = new b2FixtureDef;
+                 fixDef.density = 0.00000001;
+                 fixDef.friction = 0.001;
+                 fixDef.restitution = 0.001;
+                 fixDef.shape = new b2CircleShape(rad/scale);   
+
+                 var bodyDef = new b2BodyDef;                
+                 bodyDef.type = b2Body.b2_dynamicBody;
+                 bodyDef.position.x = px/scale;    
+                 bodyDef.position.y = py/scale;   
+                 bodyDef.userData = {shape_type: 'ball', img: imgBall, width: rad, height: rad}; 
+                 var mybody=world.CreateBody(bodyDef);
+                 var myfix=mybody.CreateFixture(fixDef);
+                 return mybody;
+
+            }
+
+            function createCarAt(w,h,px,py){
+
+                 var fixDef = new b2FixtureDef;
+                 fixDef.density = 3.0;//密度
+                 fixDef.friction = 0.5;//摩擦
+                 fixDef.restitution = 0.9;//弹性
+                 fixDef.shape = new b2PolygonShape;//矩形
+                 fixDef.shape.SetAsBox(w/2/scale, h/2/scale);
+                 var bodyDef = new b2BodyDef;                 
+                 bodyDef.type = b2Body.b2_dynamicBody;
+                 bodyDef.position.Set(px/scale,py/scale);
+                 bodyDef.userData = {shape_type: 'carbody', img: imgCarbody, width: w, height: h};
+                var carbody=world.CreateBody(bodyDef);
+                var myfix=carbody.CreateFixture(fixDef);   
+
+                //var wheel1=createCircle(10,px-15,py+15,b2Body.b2_dynamicBody);
+                //var wheel2=createCircle(10,px+15,py+15,b2Body.b2_dynamicBody); 
+                var wheel1=createWheel(10,px-15,py+15,b2Body.b2_dynamicBody,"wheel");
+                var wheel2=createWheel(10,px+15,py+15,b2Body.b2_dynamicBody,"wheel");
+
+                frontwheel=wheel2;
+                backwheel=wheel1;
+
+
+                var jointDef_r = new b2RevoluteJointDef();
+                jointDef_r.Initialize(carbody,wheel1,wheel1.GetWorldCenter());
+                jointDef_r.enableMotor = false;
+                r_joint=world.CreateJoint(jointDef_r);
+                var jointDef_f = new b2RevoluteJointDef();
+                jointDef_f.Initialize(carbody,wheel2,wheel2.GetWorldCenter());
+                jointDef_f.maxMotorTorque = 0;
+                jointDef_f.enableMotor = false;
+                f_joint=world.CreateJoint(jointDef_f);
+                return carbody;
+            }
+
+            function createFan(w,h,px,py){
+                 var fixDef = new b2FixtureDef;
+                 fixDef.density = 3.0;//密度
+                 fixDef.friction = 0.5;//摩擦
+                 fixDef.restitution = 0.9;//弹性
+                 fixDef.shape = new b2PolygonShape;//矩形
+                 fixDef.shape.SetAsBox(w/2/scale, h/2/scale);
+                 var bodyDef = new b2BodyDef;                 
+                 bodyDef.type = b2Body.b2_dynamicBody;
+                 bodyDef.position.Set(px/scale,py/scale);
+                 bodyDef.userData = {shape_type: 'fanbody', img: imgDiban, width: w, height: h};
+                var fanbody=world.CreateBody(bodyDef);
+                var myfix=fanbody.CreateFixture(fixDef); 
+
+                var wheel=createWheel(10,px-10,py+10,b2Body.b2_staticBody,"wheelA");
+
+                var jointDef = new b2RevoluteJointDef();
+                jointDef.Initialize(fanbody,wheel,wheel.GetWorldCenter());
+                jointDef.enableMotor = false;
+                r_joint=world.CreateJoint(jointDef);
+                
+                return fanbody; 
+
+            }
+
+            function createTree(px,py){
+                var fixDef = new b2FixtureDef;
+                fixDef.density = 3.0;//密度
+                fixDef.friction = 0.5;//摩擦
+                fixDef.restitution = 0.9;//弹性
+                fixDef.shape = new b2PolygonShape;//矩形
+                var points=[
+                 new b2Vec2(0,0),
+                 new b2Vec2(20/scale,50/scale),
+                 new b2Vec2(30/scale,100/scale),
+                 new b2Vec2(-30/scale,100/scale),
+                 new b2Vec2(-20/scale,50/scale),
+
+                ];
+                fixDef.shape.SetAsArray(points,points.length);
+                var bodyDef = new b2BodyDef;                 
+                bodyDef.type = b2Body.b2_dynamicBody;
+                bodyDef.position.Set(px/scale,py/scale);
+                bodyDef.userData = {shape_type: 'tree', img: imgTree, width: 60, height: 100};
+                var treebody=world.CreateBody(bodyDef);
+                var myfix=treebody.CreateFixture(fixDef); 
+                return treebody
+
+            }
+
+           
+
+            function restartGame(){
+
+                world = createWorld();
+                createBox(200,15,150,390,b2_staticBody,0); //final point w,h,px,py
+                createBox(100,15,300,350,b2_staticBody,-30*Math.PI/180);//block1 
+                //createBox(100,15,400,300,b2_staticBody,-45*Math.PI/180);//block2
+                //createBox(100,15,550,300,b2_staticBody,20*Math.PI/180);//block3
+                //createBox(100,15,650,340,b2_staticBody,10*Math.PI/180);//block4
+                createBox(100,15,800,250,b2_staticBody,0);//block5
+                createBox(270,30,495,325,b2_staticBody,0);//InputBox Block
+                flag=createBox(45,45,900,120,b2_staticBody,0);
+                car=createCarAt(60,30,500,100);
+                fan1=createFan(200,15,300,180);
+                fan2=createFan(200,15,650,180);
+                tree1=createTree(100,300);
+                tree2=createTree(160,300);
+                tree3=createTree(820,150);
+                ball=createBallAt(10,Math.floor(Math.random()*(700-20+1)+150),Math.floor(Math.random()*(80-20+1)+20));
+
+                for(i=0;i<50;i++){
+                    createBallAt(10,Math.floor(Math.random()*(700-20+1)+150),Math.floor(Math.random()*(80-20+1)+20));
+                }
+
+               var debugDraw = new b2DebugDraw();
+                debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+                debugDraw.SetDrawScale(30.0);
+                debugDraw.SetFillAlpha(0.3);
+                debugDraw.SetLineThickness(1.0);
+                debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+                world.SetDebugDraw(debugDraw); 
+
+
+
+                var Listener = new b2ContactListener; //碰撞监听
+                Listener.BeginContact = beginContact; //碰撞接口函数
+            //contactListener.EndContact   = endContact;
+            //contactListener.PreSolve     = preSolve;
+            //contactListener.PostSolve    = postSolve;
+                world.SetContactListener(Listener);
+                fuel=500;
+
+
+                  
+                
+            }
+
+
+             $('body').click(function(e){
+                
+               
+                //bodyDef2.position.x = Math.floor(Math.random()*20);    
+                //bodyDef2.position.y = 6;    
+                var y=e.pageY;
+                var x=e.pageX;
+
+                createBox(60,30,x,y,b2Body.b2_dynamicBody,0);
+                createCircle(10,x-15,y+5,b2Body.b2_dynamicBody);
+                createCircle(10,x+15,y+5,b2Body.b2_dynamicBody);
+                });
+
+             $(document).keydown(function(e) {
+                 /* Act on the event */
+                 switch(e.keyCode){
+                    case 88: //X Key to right
+                        if (fuel>0){
+                        var force=new b2Vec2(500,0);
+                        car.ApplyForce(force, car.GetWorldCenter());
+                        fuel-=5;
+                        pro.value=fuel;
+                        $(".fuel-value").width(fuel/fuelmax*100+'%');
+                    }
+                        break;
+                    case 90: //Z Key to left
+                         if (fuel>0){
+                        var force=new b2Vec2(-1000,0);
+                        car.ApplyForce(force, car.GetWorldCenter());
+                        fuel-=5;
+                        pro.value=fuel;
+                         $(".fuel-value").width(fuel/fuelmax*100+'%');
+                        break;
+                    }
+                    case 83: //S Key to UP
+                         if (fuel>0){
+                        var force=new b2Vec2(0,-300);
+                        car.ApplyForce(force, car.GetWorldCenter());
+                        fuel-=10;
+                        pro.value=fuel;
+                         $(".fuel-value").width(fuel/fuelmax*100+'%');
+                    }
+                        break;
+                    case 82: //R Key
+                         console.log("rrrr");
+                         restartGame();
+                         break;
+
+                 }
+             });
+
+             function drawMyImage(myimg, dx,dy,degree){
+                  var context = document.getElementById('canvas').getContext('2d');
+                  context.save();
+                  var slideX =dx;
+                  var slideY =dy;
+                  context.translate(slideX, slideY);
+                  context.rotate(degree);
+                  context.drawImage(myimg,0,0);
+                  context.restore();
+             }
+
+            //5.一帧帧执行
+
+            var cloudX=1000;
+            var cloudY=300;
+
+            window.setInterval(update, 1000 / 60);
+         
+            function update() {
+                 //Take a time step.               
+                 world.Step(
+                       1 / 60   //frame-rate
+                    ,  10       //velocity iterations
+                    ,  10       //position iterations
+                 );
+
+                var context = document.getElementById('canvas').getContext('2d');
+               
+                
+
+                cloudX-=1;
+                    if(cloudX<-500){
+
+                        cloudX=1000;
+                    }
+                 //Call this to draw shapes and other debug draw data.
+                 context.clearRect(0,0,1000,400);
+                 context.drawImage(imgBK,0,0);
+                 //world.DrawDebugData();
+            
+                 //Call this after you are done with time steps to clear the forces. You normally call this after each call to Step, unless you are performing sub-steps.  
+                carx= parseInt(car.GetPosition().x*30);
+                cary= parseInt(car.GetPosition().y*30);
+                console.log(parseInt(car.GetPosition().x*30));
+                 if(carx>1030 || cary>415){
+                   restartGame();
+                 }
+
+                 world.ClearForces();
+                  //Draw Car Pics
+                
+
+                for ( var bodyItem = world.GetBodyList();
+                          bodyItem;
+                          bodyItem = bodyItem.GetNext() ) {
+                    var userData=bodyItem.GetUserData();
+                    if(userData && userData.shape_type=="carbody"){
+                        console.log("DDDDraw");
+                        context.save();
+                        var position = bodyItem.GetPosition();
+                        var slideX = position.x * 30;
+                        var slideY = position.y * 30;
+                        context.translate(slideX, slideY);
+                        context.rotate( bodyItem.GetAngle() );
+                        context.drawImage(imgLeo,-30,-105);
+                        context.drawImage(userData.img, -userData.width / 2.0, -userData.height / 2.0);
+                        context.restore();
+                    }
+
+                    if(userData && userData.shape_type=="fanbody"){
+                        console.log("DDDDraw");
+                        context.save();
+                        var position = bodyItem.GetPosition();
+                        var slideX = position.x * 30;
+                        var slideY = position.y * 30;
+                        context.translate(slideX, slideY);
+                        context.rotate( bodyItem.GetAngle() );
+                        context.drawImage(userData.img, -userData.width / 2.0, -userData.height / 2.0);
+                        context.restore();
+                    }
+
+                    if(userData && userData.shape_type=="ball"){
+                        console.log("DDDDraw");
+                        context.save();
+                        var position = bodyItem.GetPosition();
+                        var slideX = position.x * 30;
+                        var slideY = position.y * 30;
+                        context.translate(slideX, slideY);
+                        context.rotate( bodyItem.GetAngle() );
+                        context.drawImage(userData.img, -userData.width, -userData.height);
+                        context.restore();
+
+
+                    }
+
+                    if(userData && userData.shape_type=="wheel"){
+                        console.log("DDDDraw");
+                        context.save();
+                        var position = bodyItem.GetPosition();
+                        var slideX = position.x * 30;
+                        var slideY = position.y * 30;
+                        context.translate(slideX, slideY);
+                        context.rotate( bodyItem.GetAngle() );
+                        context.drawImage(userData.img, -userData.width, -userData.height);
+                        context.restore();
+
+
+                    }
+
+                    if(userData && userData.shape_type=="tree"){
+                        console.log("DDDDraw");
+                        context.save();
+                        var position = bodyItem.GetPosition();
+                        var slideX = position.x * 30;
+                        var slideY = position.y * 30;
+                        context.translate(slideX, slideY);
+                        context.rotate( bodyItem.GetAngle() );
+                        context.drawImage(userData.img, -userData.width/2, 0);
+                        context.restore();
+
+
+                    }
+
+
+                    //draw left fuel
+                    //context.fillStyle='green';//设置填充的背景颜色
+                    //context.fillRect(0,0,800,300); //绘制 800*300 像素的已填充矩形：
+                    context.fillStyle = '#fff';
+                    context.strokeStyle = '#fff'; //设置笔触的颜色
+                    context.font = "bold 20px '字体','字体','微软雅黑','宋体'"; //设置字体
+                    context.textBaseline = 'hanging'; //在绘制文本时使用的当前文本基线
+                    context.fillText("Fuel:"+fuel,10 ,40); //设置文本内容
+                    context.fillText("Key Z:LEFT",10 ,80); //设置文本内容
+                    context.fillText("Key S:UP",10 ,120); //设置文本内容
+                    context.fillText("Key X:RIGHT",10 ,160); //设置文本内容
+                    context.drawImage(imgDiban,150-100,390-7); //Draw Block1
+                    context.drawImage(imgFlag,900-22,120-22);
+                    drawMyImage(imgBan,300-50,350+14,-30*Math.PI/180);//Draw Block2
+                    //drawMyImage(imgBan,400-50,300+40,-45*Math.PI/180);
+                    //drawMyImage(imgBan,550-50,300-28,20*Math.PI/180);
+                    //drawMyImage(imgBan,650-50,340-14,10*Math.PI/180);
+                    drawMyImage(imgBan,800-50,250-7,0); //Draw Block6
+                    drawMyImage(imgCloud1,cloudX,cloudY);
+                    
+                    
+
+
+
+                      }
+                
+                 
+            };
+
+
+        }
+        </script>
+    </body>
+
+</html>

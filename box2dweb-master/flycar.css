@@ -1,0 +1,15 @@
+<style>
+	background: -webkit -gradient(linear,left,top,left,bottom,
+				color-stop(0%,#8C906F),color-stop(48%,#8C906F),
+				color-stop(51%，#323721)，color-stop(54%，#55624F)，
+				color-stop(100%,#55624F));
+}
+
+.progressbar .fuel-value{
+	background: -webkit -gradient(linear,left,top,left,bottom,
+	             color-stop(0%，#A8D751),color-stop(48%,#A8D751),
+	             color-stop(51%,#275606),color-stop(54%,#4A8A49),
+	             color-stop(100%,#4A8A49));
+	
+}
+</style>
